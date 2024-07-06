@@ -24,7 +24,7 @@ public class ReportGeneratorOperatorInStatusDurations
         foreach (var record in records)
         {
             var key = (record.Operator, record.Status);
-            var totalMinutes = (int)(record.EndDate - record.StartDate).TotalMinutes;
+            var totalMinutes = record.Duration;
 
             if (!operatorStatusDurations.TryAdd(key, totalMinutes))
             {
