@@ -33,6 +33,7 @@ public class ReportGeneratorOperatorInStatusDurations
         }
 
         return operatorStatusDurations.Select(x => new OperatorInStatusDurations
-            { Operator = x.Key.Operator, Status = x.Key.Status, Duration = x.Value }).ToArray();
+            { Operator = x.Key.Operator, Status = x.Key.Status, Duration = x.Value })
+            .ToArray();
     }
 }
