@@ -8,9 +8,10 @@ class Program
     static void Main(string[] args)
     {
         var recordsDataProvider = new WorkDataRecordProvider(args[0]);
+        //var recordsDataProvider = new WorkDataRecordProvider("C:\\repos\\CallCenterReports\\Data\\test_data_onemonth.csv");
         var reportGeneratorActiveSessions =  new ReportGeneratorActiveSessions(recordsDataProvider);
 
-        Console.WriteLine("Active sessions number report start");
+        Console.WriteLine("Maximum active sessions number report start");
         
         foreach (var record in reportGeneratorActiveSessions.GetReport())
         {
@@ -18,6 +19,7 @@ class Program
         }
         
         Console.WriteLine("Report end");
+        Console.WriteLine("==============================");
         Console.WriteLine("==============================");
         
         var reportGeneratorOperatorInStatusDurations =  new ReportGeneratorOperatorInStatusDurations(recordsDataProvider);

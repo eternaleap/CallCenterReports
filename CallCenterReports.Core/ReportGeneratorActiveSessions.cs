@@ -32,7 +32,8 @@ public class ReportGeneratorActiveSessions
                     recordsByDay[date] = new List<(int Start, int End)>();
                 }
                 recordsByDay[date].Add((
-                    (int)(record.StartDate - record.StartDate.Date).TotalSeconds, 
+                    (int)(record.StartDate - record.StartDate.Date).TotalSeconds,
+                    // TODO: speed up solution by using precalculated Duration field
                     (int)(record.EndDate - record.StartDate.Date).TotalSeconds
                 ));
             }
@@ -42,46 +43,36 @@ public class ReportGeneratorActiveSessions
 
         foreach (var dayRecords in recordsByDay)
         {
-            var maxOverlaps = GetMaxOverlaps(dayRecords.Value.ToList());
+            var maxOverlaps = GetMaxOverlaps(dayRecords.Value.OrderBy(x => x.Start).ThenBy(x => x.End).ToList());
             result.Add(new ActiveSessionsByDay { Date = dayRecords.Key, ActiveSessionsCount = maxOverlaps });
         }
 
         return result;
     }
     
-    static int GetMaxOverlaps(List<(int Start, int End)> ranges)
+    static int GetMaxOverlaps(IReadOnlyList<(int Start, int End)> lines)
     {
-        var hash = new Dictionary<int, int>();
-        var lastRangeEndValue = ranges[0].End;
-        
-        foreach (var range in ranges)
+        if (lines == null || !lines.Any()) return 0;
+
+        var maxOverlaps = 0;
+        var activeIntervals = new List<(int Start, int End)> { lines[0] };
+
+        for (var i = 1; i < lines.Count; i++)
         {
-            if (!hash.TryAdd(range.Start, 1))
-            {
-                hash[range.Start]++;
-            }
+            var overlapsWithAll = activeIntervals.All(interval => lines[i].Start <= interval.End && interval.Start <= lines[i].End);
 
-            if (!hash.TryAdd(range.End, -1))
+            if (overlapsWithAll)
             {
-                hash[range.End]--;
+                activeIntervals.Add(lines[i]);
+                maxOverlaps = Math.Max(maxOverlaps, activeIntervals.Count);
             }
-
-            lastRangeEndValue = Math.Max(lastRangeEndValue, range.End);
+            else
+            {
+                activeIntervals.Clear();
+                activeIntervals.Add(lines[i]);
+            }
         }
 
-        var totalOverlaps = hash.First().Value;
-        var maxTotalOverlaps = totalOverlaps;
-        
-        foreach (var pair in hash)
-        {
-            totalOverlaps += hash[pair.Key];
-            
-            if (totalOverlaps > maxTotalOverlaps)
-            {
-                maxTotalOverlaps = totalOverlaps;
-            }
-        }
-        
-        return maxTotalOverlaps;
+        return maxOverlaps;
     }
 }
