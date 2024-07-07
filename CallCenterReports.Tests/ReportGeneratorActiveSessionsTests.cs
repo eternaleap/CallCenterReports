@@ -1,4 +1,5 @@
 using CallCenterReports.Core;
+using CallCenterReports.Service;
 using Moq;
 
 namespace CallCenterReports.Tests
@@ -19,6 +20,19 @@ namespace CallCenterReports.Tests
 
             // Assert
             Assert.Empty(result);
+        }
+        
+        [Fact]
+        public void GetReport_ForSingleDay_Returns10()
+        {
+            // Arrange
+            var generator = new ReportGeneratorActiveSessions(new WorkDataRecordProvider("C:\\repos\\CallCenterReports\\Data\\test_data_oneday.csv"));
+
+            // Act
+            var result = generator.GetReport().ToArray();
+
+            // Assert
+            Assert.Equal(12, result[0].ActiveSessionsCount);
         }
 
         [Fact]
@@ -64,6 +78,7 @@ namespace CallCenterReports.Tests
             var records = new List<OperatorWorkRecord>
             {
                 // doesn't overlap with later dataset
+                
                 new() { StartDate = startDate.AddHours(-8), EndDate = endDate.AddHours(-16), Operator = "0" },
                 new() { StartDate = startDate.AddHours(-8), EndDate = endDate.AddHours(-8), Operator = "0" },
                 new() { StartDate = startDate.AddHours(-8), EndDate = endDate.AddHours(-8), Operator = "0" },
@@ -79,6 +94,9 @@ namespace CallCenterReports.Tests
                 // doesn't overlap
                 new() { StartDate = endDate, EndDate = endDate, Operator = "2" },
             };
+            
+            records.ForEach(x => x.Duration = (int)(x.EndDate - x.StartDate).TotalSeconds);
+            
             mockProvider.Setup(p => p.GetData()).Returns(records);
 
             var generator = new ReportGeneratorActiveSessions(mockProvider.Object);

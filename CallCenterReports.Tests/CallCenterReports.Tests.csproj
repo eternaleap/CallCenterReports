@@ -23,6 +23,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\CallCenterReports.Core\CallCenterReports.Core.csproj" />
+      <ProjectReference Include="..\CallCenterReports.Service\CallCenterReports.Service.csproj" />
     </ItemGroup>
 
 </Project>

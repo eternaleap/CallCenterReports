@@ -1,4 +1,6 @@
-﻿namespace CallCenterReports.Core;
+﻿using System.Collections;
+
+namespace CallCenterReports.Core;
 
 public class ActiveSessionsByDay
 {
@@ -14,10 +16,11 @@ public class ReportGeneratorActiveSessions
     {
         _dataRecordProvider = dataRecordProvider;
     }
-
+    
     public IReadOnlyCollection<ActiveSessionsByDay> GetReport()
     {
         var records = _dataRecordProvider.GetData();
+        
         var recordsByDay = new Dictionary<DateTime, List<(int Start, int End)>>();
 
         foreach (var record in records)
@@ -31,11 +34,9 @@ public class ReportGeneratorActiveSessions
                 {
                     recordsByDay[date] = new List<(int Start, int End)>();
                 }
-                recordsByDay[date].Add((
-                    (int)(record.StartDate - record.StartDate.Date).TotalSeconds,
-                    // TODO: speed up solution by using precalculated Duration field
-                    (int)(record.EndDate - record.StartDate.Date).TotalSeconds
-                ));
+
+                var start = (int)(record.StartDate - record.StartDate.Date).TotalSeconds;
+                recordsByDay[date].Add((start, start + record.Duration));
             }
         }
         
@@ -43,7 +44,7 @@ public class ReportGeneratorActiveSessions
 
         foreach (var dayRecords in recordsByDay)
         {
-            var maxOverlaps = GetMaxOverlaps(dayRecords.Value.OrderBy(x => x.Start).ThenBy(x => x.End).ToList());
+            var maxOverlaps = GetMaxOverlaps(dayRecords.Value.OrderBy(x => x.End).ThenBy(x => x.Start).ToArray());
             result.Add(new ActiveSessionsByDay { Date = dayRecords.Key, ActiveSessionsCount = maxOverlaps });
         }
 
@@ -52,14 +53,16 @@ public class ReportGeneratorActiveSessions
     
     static int GetMaxOverlaps(IReadOnlyList<(int Start, int End)> lines)
     {
-        if (lines == null || !lines.Any()) return 0;
+        if (!lines.Any()) 
+            return 0;
 
         var maxOverlaps = 0;
         var activeIntervals = new List<(int Start, int End)> { lines[0] };
 
         for (var i = 1; i < lines.Count; i++)
         {
-            var overlapsWithAll = activeIntervals.All(interval => lines[i].Start <= interval.End && interval.Start <= lines[i].End);
+            var currentInterval = lines[i];
+            var overlapsWithAll = activeIntervals.All(interval => IsOverlaps(currentInterval, interval));
 
             if (overlapsWithAll)
             {
@@ -68,11 +71,15 @@ public class ReportGeneratorActiveSessions
             }
             else
             {
-                activeIntervals.Clear();
-                activeIntervals.Add(lines[i]);
+                activeIntervals.RemoveAll(interval => !IsOverlaps(currentInterval, interval));
+                activeIntervals.Add(currentInterval);
+                maxOverlaps = Math.Max(maxOverlaps, activeIntervals.Count);
             }
         }
 
         return maxOverlaps;
     }
+
+    static bool IsOverlaps((int Start, int End) first, (int Start, int End) second) =>
+        first.Start <= second.End && second.Start <= first.End;
 }
