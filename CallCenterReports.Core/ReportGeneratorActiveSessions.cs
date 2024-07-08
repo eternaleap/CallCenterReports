@@ -1,6 +1,4 @@
-﻿using System.Collections;
-
-namespace CallCenterReports.Core;
+﻿namespace CallCenterReports.Core;
 
 public class ActiveSessionsByDay
 {
@@ -44,42 +42,45 @@ public class ReportGeneratorActiveSessions
 
         foreach (var dayRecords in recordsByDay)
         {
-            var maxOverlaps = GetMaxOverlaps(dayRecords.Value.OrderBy(x => x.End).ThenBy(x => x.Start).ToArray());
+            var maxOverlaps = GetMaxOverlapsCount(dayRecords.Value.OrderBy(x => x.End)
+                .ThenBy(x => x.Start)
+                .ToList());
+            
             result.Add(new ActiveSessionsByDay { Date = dayRecords.Key, ActiveSessionsCount = maxOverlaps });
         }
 
         return result;
     }
     
-    static int GetMaxOverlaps(IReadOnlyList<(int Start, int End)> lines)
+    static int GetMaxOverlapsCount(List<(int Start, int End)> lines)
     {
-        if (!lines.Any()) 
-            return 0;
+        if (!lines.Any()) return 0;
 
-        var maxOverlaps = 0;
-        var activeIntervals = new List<(int Start, int End)> { lines[0] };
-
-        for (var i = 1; i < lines.Count; i++)
+        var markers = new List<(int Time, bool IsStart)>();
+        foreach (var line in lines)
         {
-            var currentInterval = lines[i];
-            var overlapsWithAll = activeIntervals.All(interval => IsOverlaps(currentInterval, interval));
-
-            if (overlapsWithAll)
-            {
-                activeIntervals.Add(lines[i]);
-                maxOverlaps = Math.Max(maxOverlaps, activeIntervals.Count);
-            }
-            else
-            {
-                activeIntervals.RemoveAll(interval => !IsOverlaps(currentInterval, interval));
-                activeIntervals.Add(currentInterval);
-                maxOverlaps = Math.Max(maxOverlaps, activeIntervals.Count);
-            }
+            markers.Add((line.Start, true));
+            markers.Add((line.End, false));
         }
 
-        return maxOverlaps;
-    }
+        markers.Sort((a, b) =>
+        {
+            var timeComparison = a.Time.CompareTo(b.Time);
+            return timeComparison != 0 ? timeComparison : a.IsStart.CompareTo(b.IsStart);
+        });
 
-    static bool IsOverlaps((int Start, int End) first, (int Start, int End) second) =>
-        first.Start <= second.End && second.Start <= first.End;
+        int maxOverlaps = 0, currentOverlaps = 0;
+
+        foreach (var marker in markers)
+        {
+            if (marker.IsStart)
+                currentOverlaps++;
+            else
+                currentOverlaps--;
+
+            maxOverlaps = Math.Max(maxOverlaps, currentOverlaps);
+        }
+
+        return maxOverlaps - 1;
+    }
 }

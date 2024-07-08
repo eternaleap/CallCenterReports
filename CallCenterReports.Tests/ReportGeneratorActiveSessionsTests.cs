@@ -23,6 +23,34 @@ namespace CallCenterReports.Tests
         }
         
         [Fact]
+        public void GetReport_WithSingleRecord_ReturnsZero()
+        {
+            // Arrange
+            var mockProvider = new Mock<IWorkDataRecordProvider>();
+            var startDate = new DateTime(2023, 4, 1).AddHours(2);
+            var endDate = new DateTime(2023, 4, 1).AddHours(4);
+            var records = new List<OperatorWorkRecord>
+            {
+                new() { StartDate = startDate.AddHours(-2), EndDate = endDate.AddHours(-2), Operator = "0" },
+                new() { StartDate = startDate, EndDate = endDate, Operator = "0" },
+                new() { StartDate = startDate.AddHours(2), EndDate = endDate.AddHours(2), Operator = "0" },
+            };
+            
+            records.ForEach(x => x.Duration = (int)(x.EndDate - x.StartDate).TotalSeconds);
+            
+            mockProvider.Setup(p => p.GetData()).Returns(records);
+
+            var generator = new ReportGeneratorActiveSessions(mockProvider.Object);
+
+            // Act
+            var result = generator.GetReport().ToArray();
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal(0, result[0].ActiveSessionsCount);
+        }
+        
+        [Fact]
         public void GetReport_ForSingleDay_Returns10()
         {
             // Arrange
@@ -32,7 +60,7 @@ namespace CallCenterReports.Tests
             var result = generator.GetReport().ToArray();
 
             // Assert
-            Assert.Equal(12, result[0].ActiveSessionsCount);
+            Assert.Equal(10, result[0].ActiveSessionsCount);
         }
 
         [Fact]
@@ -48,13 +76,16 @@ namespace CallCenterReports.Tests
                 new() { StartDate = startDate, EndDate = endDate.AddHours(-1), Operator = "0" },
                 
                 // overlaps
-                new() { StartDate = startDate, EndDate = endDate, Operator = "1" },
-                new() { StartDate = startDate, EndDate = endDate, Operator = "1" },
+                new() { StartDate = startDate, EndDate = endDate.AddMinutes(1), Operator = "1" },
+                new() { StartDate = startDate, EndDate = endDate.AddMinutes(1), Operator = "1" },
                 new() { StartDate = startDate.AddMinutes(10), EndDate = endDate.AddMinutes(10), Operator = "2" },
                 
                 // +2 days - doesn't overlaps with previous
                 new() { StartDate = startDate.AddDays(2), EndDate = endDate.AddDays(2), Operator = "3" }
             };
+            
+            records.ForEach(x => x.Duration = (int)(x.EndDate - x.StartDate).TotalSeconds);
+            
             mockProvider.Setup(p => p.GetData()).Returns(records);
 
             var generator = new ReportGeneratorActiveSessions(mockProvider.Object);
@@ -65,7 +96,7 @@ namespace CallCenterReports.Tests
             // Assert
             Assert.Equal(2, result.Length);
             Assert.Equal(startDate.Date, result[0].Date);
-            Assert.Equal(3, result[0].ActiveSessionsCount);
+            Assert.Equal(2, result[0].ActiveSessionsCount);
         }
 
         [Fact]
@@ -107,7 +138,7 @@ namespace CallCenterReports.Tests
             // Assert
             Assert.Single(result);
             Assert.Equal(startDate.Date, result[0].Date);
-            Assert.Equal(6, result[0].ActiveSessionsCount);
+            Assert.Equal(5, result[0].ActiveSessionsCount);
         }
     }
 }
