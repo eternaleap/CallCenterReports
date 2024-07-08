@@ -13,4 +13,11 @@
       <ProjectReference Include="..\CallCenterReports.Service\CallCenterReports.Service.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Include="..\Data\test_data_onemonth.csv">
+        <Link>test_data_onemonth.csv</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
 </Project>

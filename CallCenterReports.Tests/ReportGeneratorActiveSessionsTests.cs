@@ -54,7 +54,7 @@ namespace CallCenterReports.Tests
         public void GetReport_ForSingleDay_Returns10()
         {
             // Arrange
-            var generator = new ReportGeneratorActiveSessions(new WorkDataRecordProvider("C:\\repos\\CallCenterReports\\Data\\test_data_oneday.csv"));
+            var generator = new ReportGeneratorActiveSessions(new WorkDataRecordProvider("test_data_oneday.csv"));
 
             // Act
             var result = generator.GetReport().ToArray();

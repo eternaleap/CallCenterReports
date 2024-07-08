@@ -42,7 +42,8 @@ public class ReportGeneratorActiveSessions
 
         foreach (var dayRecords in recordsByDay)
         {
-            var maxOverlaps = GetMaxOverlapsCount(dayRecords.Value.OrderBy(x => x.End)
+            var maxOverlaps = GetMaxOverlapsCount(dayRecords.Value
+                .OrderBy(x => x.End)
                 .ThenBy(x => x.Start)
                 .ToList());
             
@@ -63,10 +64,10 @@ public class ReportGeneratorActiveSessions
             markers.Add((line.End, false));
         }
 
-        markers.Sort((a, b) =>
+        markers.Sort((first, second) =>
         {
-            var timeComparison = a.Time.CompareTo(b.Time);
-            return timeComparison != 0 ? timeComparison : a.IsStart.CompareTo(b.IsStart);
+            var timeComparison = first.Time.CompareTo(second.Time);
+            return timeComparison != 0 ? timeComparison : first.IsStart.CompareTo(second.IsStart);
         });
 
         int maxOverlaps = 0, currentOverlaps = 0;
@@ -81,6 +82,6 @@ public class ReportGeneratorActiveSessions
             maxOverlaps = Math.Max(maxOverlaps, currentOverlaps);
         }
 
-        return maxOverlaps - 1;
+        return maxOverlaps > 0 ? maxOverlaps - 1 : 0;
     }
 }

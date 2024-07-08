@@ -26,4 +26,11 @@
       <ProjectReference Include="..\CallCenterReports.Service\CallCenterReports.Service.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Include="..\Data\test_data_oneday.csv">
+        <Link>test_data_oneday.csv</Link>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
 </Project>
